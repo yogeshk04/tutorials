@@ -1,0 +1,60 @@
+version: "3.7"
+
+services:
+# Spring boot backend application
+  api_service:
+    build: ./spring-boot-server
+    container_name: backend-container
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - app-net
+    # command: ["sh", "-c", "sleep 30 && java -jar spring-boot-data-jpa.jar"]
+    environment:
+      # - spring.datasource.url=jdbc:mysql://localhost:3306/tutorials-db?useSSL=false
+      - spring.datasource.url=jdbc:mysql://mysqldb:3306/tutorials?allowPublicKeyRetrieval=true
+    depends_on:
+      - mysqldb          
+    volumes:
+      - .m2:/root/.m2
+
+  # MySql database service
+  mysqldb:
+    image: "mysql:8.0"
+    container_name: mysql-db
+    restart: always
+    ports:
+      - 3306:33060
+    networks:
+      - app-net
+    environment:
+      MYSQL_DATABASE: tutorials
+      MYSQL_USER: yogesh_one
+      MYSQL_PASSWORD: Yogesh_pw
+      MYSQL_ROOT_PASSWORD: Yogesh_Rpw
+    
+  # MySql Web UI using php my admin
+  php-my-admin:
+    image: phpmyadmin
+    restart: always
+    container_name: php-my-admin
+    ports:
+      - 8082:80
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - app-net
+
+  # Angular Frontend application
+  frontend:
+    build: ./angular-16-client
+    container_name: webapp-container
+    ports:
+      - 4200:4200
+    links:
+      - api_service
+    networks:
+      - app-net
+networks:
+  app-net:
